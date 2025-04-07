@@ -27,6 +27,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
@@ -41,15 +42,16 @@ import javax.swing.filechooser.FileNameExtensionFilter;
  * 
  *
  */
-public class GeoAnalytiqueControleur implements ActionListener, MouseListener, HierarchyBoundsListener {
+public class GeoAnalytiqueControleur implements ActionListener, MouseListener, HierarchyBoundsListener, Serializable {
+	private static final long serialVersionUID = 1L;
 
 	private ArrayList<GeoObject> objs;
 	private ViewPort viewport;
-	private GeoAnalytiqueGUI view;
+	private transient GeoAnalytiqueGUI view;
 	
 	private transient GeoObject select;
 	
-	private boolean isSelectionProgrammatic = false;
+	private transient boolean isSelectionProgrammatic = false;
 	
         
 		
@@ -785,16 +787,16 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
 				if(res == null)
 					return;
 				if(ope.getClassArgument(i) == Double.class) {
-					ope.setArgument(i, new Double(res));
+					ope.setArgument(i, Double.valueOf(res));
 				}
 				else if(ope.getClassArgument(i) == Integer.class) {
-					ope.setArgument(i, new Integer(res));
+					ope.setArgument(i, Integer.valueOf(res));
 				}
 				else if(ope.getClassArgument(i) == Character.class) {
-					ope.setArgument(i, new Character(res.charAt(0)));
+					ope.setArgument(i, Character.valueOf(res.charAt(0)));
 				}
 				else if(ope.getClassArgument(i) == String.class) {
-					ope.setArgument(i, new String(res));
+					ope.setArgument(i, res);
 				}
 				else if(GeoObject.class.isAssignableFrom(ope.getClassArgument(i))) {
 					ope.setArgument(i, searchObject(res));
@@ -971,13 +973,26 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
                 fileToSave = new File(fileToSave.getAbsolutePath() + ".geo");
             }
             
-            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fileToSave))) {
+            try (FileOutputStream fos = new FileOutputStream(fileToSave);
+                 ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+                
+                // Vérifier que les objets sont sérialisables
+                for (GeoObject obj : objs) {
+                    if (!(obj instanceof Serializable)) {
+                        throw new IOException("L'objet " + obj.getName() + " n'est pas sérialisable");
+                    }
+                }
+                
                 // Enregistrer le nombre d'objets
                 oos.writeInt(objs.size());
                 
                 // Enregistrer chaque objet
                 for (GeoObject obj : objs) {
-                    oos.writeObject(obj);
+                    try {
+                        oos.writeObject(obj);
+                    } catch (IOException e) {
+                        throw new IOException("Erreur lors de la sérialisation de l'objet " + obj.getName() + ": " + e.getMessage(), e);
+                    }
                 }
                 
                 JOptionPane.showMessageDialog(view,
@@ -986,9 +1001,23 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
                     JOptionPane.INFORMATION_MESSAGE);
                 
             } catch (IOException ex) {
+                // Afficher l'erreur complète dans la console pour le débogage
+                ex.printStackTrace();
+                
+                // Message d'erreur détaillé pour l'utilisateur
+                StringBuilder errorMessage = new StringBuilder("Erreur lors de l'enregistrement du projet: ");
+                errorMessage.append(ex.getMessage());
+                
+                // Ajouter les causes de l'erreur si elles existent
+                Throwable cause = ex.getCause();
+                while (cause != null) {
+                    errorMessage.append("\nCause: ").append(cause.getMessage());
+                    cause = cause.getCause();
+                }
+                
                 JOptionPane.showMessageDialog(view,
-                    "Erreur lors de l'enregistrement du projet: " + ex.getMessage(),
-                    "Erreur",
+                    errorMessage.toString(),
+                    "Erreur d'enregistrement",
                     JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -1007,7 +1036,9 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             File fileToOpen = fileChooser.getSelectedFile();
             
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fileToOpen))) {
+            try (FileInputStream fis = new FileInputStream(fileToOpen);
+                 ObjectInputStream ois = new ObjectInputStream(fis)) {
+                
                 // Effacer les objets existants
                 objs.clear();
                 view.getCanvas().clear();
@@ -1017,13 +1048,17 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
                 
                 // Lire chaque objet
                 for (int i = 0; i < count; i++) {
-                    GeoObject obj = (GeoObject) ois.readObject();
-                    
-                    // Mettre à jour le contrôleur dans l'objet
-                    obj.setControleur(this);
-                    
-                    // Ajouter l'objet
-                    objs.add(obj);
+                    try {
+                        GeoObject obj = (GeoObject) ois.readObject();
+                        
+                        // Mettre à jour le contrôleur dans l'objet
+                        obj.setControleur(this);
+                        
+                        // Ajouter l'objet
+                        objs.add(obj);
+                    } catch (ClassNotFoundException | IOException e) {
+                        throw new IOException("Erreur lors de la lecture de l'objet #" + (i+1) + ": " + e.getMessage(), e);
+                    }
                 }
                 
                 // Mettre à jour la vue
@@ -1035,10 +1070,23 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
                     "Ouverture réussie",
                     JOptionPane.INFORMATION_MESSAGE);
                 
-            } catch (IOException | ClassNotFoundException ex) {
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                
+                // Message d'erreur détaillé pour l'utilisateur
+                StringBuilder errorMessage = new StringBuilder("Erreur lors de l'ouverture du projet: ");
+                errorMessage.append(ex.getMessage());
+                
+                // Ajouter les causes de l'erreur si elles existent
+                Throwable cause = ex.getCause();
+                while (cause != null) {
+                    errorMessage.append("\nCause: ").append(cause.getMessage());
+                    cause = cause.getCause();
+                }
+                
                 JOptionPane.showMessageDialog(view,
-                    "Erreur lors de l'ouverture du projet: " + ex.getMessage(),
-                    "Erreur",
+                    errorMessage.toString(),
+                    "Erreur d'ouverture",
                     JOptionPane.ERROR_MESSAGE);
             }
         }

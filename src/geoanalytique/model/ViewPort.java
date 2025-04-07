@@ -1,6 +1,7 @@
 package geoanalytique.model;
 
 import geoanalytique.graphique.GCoordonnee;
+import java.io.Serializable;
 
 /**
  * Cette classe definit la zone de dessin virtuel (celle affichable dans le canevas)
@@ -13,7 +14,9 @@ import geoanalytique.graphique.GCoordonnee;
  * 
  * 
  */
-public class ViewPort {
+public class ViewPort implements Serializable {
+    private static final long serialVersionUID = 1L;
+    
     private double xmin;
     private double xmax;
     private double  ymin;

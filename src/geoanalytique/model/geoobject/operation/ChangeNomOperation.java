@@ -11,9 +11,9 @@ import geoanalytique.util.Operation;
  * 
  */
 public class ChangeNomOperation implements Operation {
-
+	private static final long serialVersionUID = 1L;
 	private GeoObject object;
-	private transient String tmp;
+	private String tmp; // Ne plus utiliser transient pour permettre la sauvegarde de l'état
 	
 	/**
 	 * @param object 
@@ -21,6 +21,7 @@ public class ChangeNomOperation implements Operation {
 	 */
 	public ChangeNomOperation(GeoObject object) {
 		this.object = object;
+		this.tmp = ""; // Initialisation par défaut
 	}
 
 	/**

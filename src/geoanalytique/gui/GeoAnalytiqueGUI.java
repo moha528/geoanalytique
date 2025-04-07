@@ -122,26 +122,58 @@ public class GeoAnalytiqueGUI extends JPanel {
    private JToolBar createToolbar() {
        JToolBar toolbar = new JToolBar();
        toolbar.setFloatable(false);
+       toolbar.setBorder(BorderFactory.createEtchedBorder());
        
-       // Boutons de zoom
-       btnZoomIn = new JButton("Zoom +");
-       btnZoomOut = new JButton("Zoom -");
-       btnZoomReset = new JButton("Reset Zoom");
+       // Création des panels pour grouper les boutons liés
+       JPanel zoomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+       zoomPanel.setOpaque(false);
+       JPanel filePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
+       filePanel.setOpaque(false);
        
-       // Boutons de sauvegarde/chargement
-       btnSaveImage = new JButton("Enregistrer Image");
-       btnSaveProject = new JButton("Enregistrer Projet");
-       btnOpenProject = new JButton("Ouvrir Projet");
+       // Boutons de zoom avec icônes
+       btnZoomIn = new JButton("\uD83D\uDD0D+");
+       btnZoomOut = new JButton("\uD83D\uDD0E-");
+       btnZoomReset = new JButton("⟲");
        
-       // Ajout des boutons à la barre d'outils
-       toolbar.add(btnZoomIn);
-       toolbar.add(btnZoomOut);
-       toolbar.add(btnZoomReset);
-       toolbar.addSeparator();
-       toolbar.add(btnSaveImage);
-       toolbar.addSeparator();
-       toolbar.add(btnSaveProject);
-       toolbar.add(btnOpenProject);
+       // Style des boutons de zoom
+       btnZoomIn.setToolTipText("Agrandir la vue");
+       btnZoomOut.setToolTipText("Réduire la vue");
+       btnZoomReset.setToolTipText("Réinitialiser le zoom et le déplacement");
+       
+       btnZoomIn.setFont(new Font("Arial", Font.BOLD, 12));
+       btnZoomOut.setFont(new Font("Arial", Font.BOLD, 12));
+       btnZoomReset.setFont(new Font("Arial", Font.BOLD, 14));
+       
+       // Ajout des boutons de zoom au panel
+       zoomPanel.add(btnZoomIn);
+       zoomPanel.add(btnZoomOut);
+       zoomPanel.add(btnZoomReset);
+       
+       // Boutons de sauvegarde/chargement avec icônes
+       btnSaveImage = new JButton("\uD83D\uDDBC");
+       btnSaveProject = new JButton("\uD83D\uDCBE");
+       btnOpenProject = new JButton("\uD83D\uDCC2");
+       
+       // Style des boutons de fichier
+       btnSaveImage.setToolTipText("Enregistrer la vue comme image");
+       btnSaveProject.setToolTipText("Enregistrer le projet");
+       btnOpenProject.setToolTipText("Ouvrir un projet existant");
+       
+       btnSaveImage.setFont(new Font("Arial", Font.BOLD, 14));
+       btnSaveProject.setFont(new Font("Arial", Font.BOLD, 14));
+       btnOpenProject.setFont(new Font("Arial", Font.BOLD, 14));
+       
+       // Ajout des boutons de fichier au panel
+       filePanel.add(btnSaveImage);
+       filePanel.add(btnSaveProject);
+       filePanel.add(btnOpenProject);
+       
+       // Ajout des panels à la barre d'outils
+       toolbar.add(new JLabel(" Zoom: "));
+       toolbar.add(zoomPanel);
+       toolbar.addSeparator(new Dimension(10, 24));
+       toolbar.add(new JLabel(" Fichier: "));
+       toolbar.add(filePanel);
        
        return toolbar;
    }
