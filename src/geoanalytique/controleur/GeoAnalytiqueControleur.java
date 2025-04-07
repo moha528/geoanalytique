@@ -52,7 +52,18 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
 	public GeoAnalytiqueControleur(GeoAnalytiqueGUI view) {
 		objs = new ArrayList<GeoObject>();
 		this.view = view;
-		viewport = new ViewPort(view.getCanvas().getWidth(),view.getCanvas().getWidth());
+		
+		// Initialiser le viewport avec les dimensions actuelles du canevas
+		int canvasWidth = view.getCanvas().getWidth();
+		int canvasHeight = view.getCanvas().getHeight();
+		
+		// Utiliser des dimensions par défaut si le canevas n'est pas encore dimensionné
+		if (canvasWidth <= 0 || canvasHeight <= 0) {
+			canvasWidth = 600; // Valeur par défaut cohérente avec la taille préférée du canevas
+			canvasHeight = 500;
+		}
+		
+		viewport = new ViewPort(canvasWidth, canvasHeight);
 		
 		// Ajouter les listeners pour les boutons de création d'objets
 		view.getBtnCreatePoint().addActionListener(this);
@@ -641,10 +652,22 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
             view.getCanvas().addComponentListener(new java.awt.event.ComponentAdapter() {
                 @Override
                 public void componentResized(java.awt.event.ComponentEvent e) {
-                    viewport.resize(view.getCanvas().getWidth(), view.getCanvas().getHeight());
-                    recalculPoints();
+                    int newWidth = view.getCanvas().getWidth();
+                    int newHeight = view.getCanvas().getHeight();
+                    
+                    if (newWidth > 0 && newHeight > 0) {
+                        viewport.resize(newWidth, newHeight);
+                        recalculPoints();
+                    }
                 }
             });
+            
+            // Initialize the viewport properly with current canvas size
+            int initialWidth = view.getCanvas().getWidth();
+            int initialHeight = view.getCanvas().getHeight();
+            if (initialWidth > 0 && initialHeight > 0) {
+                viewport.resize(initialWidth, initialHeight);
+            }
             
             // Dessiner la vue initiale
             recalculPoints();
@@ -657,8 +680,13 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
 
 	public void ancestorResized(HierarchyEvent e) {
 	    // Mettre à jour le viewport lorsque le canevas est redimensionné
-	    viewport.resize(view.getCanvas().getWidth(), view.getCanvas().getHeight());
-	    recalculPoints();
+	    int newWidth = view.getCanvas().getWidth();
+	    int newHeight = view.getCanvas().getHeight();
+	    
+	    if (newWidth > 0 && newHeight > 0) {
+	        viewport.resize(newWidth, newHeight);
+	        recalculPoints();
+	    }
 	}
 
         /**

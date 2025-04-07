@@ -6,6 +6,7 @@ import geoanalytique.graphique.GLigne;
 import geoanalytique.graphique.GOvale;
 import geoanalytique.graphique.GTexte;
 import geoanalytique.graphique.Graphique;
+import geoanalytique.graphique.GraphiqueComposite;
 import geoanalytique.model.Cercle;
 import geoanalytique.model.Droite;
 import geoanalytique.model.Ellipse;
@@ -188,8 +189,13 @@ public class Dessinateur implements GeoObjectVisitor<Graphique> {
             segments.add(segment);
         }
         
-        // Pour simplifier, on retourne juste le premier segment (normalement on devrait retourner tous les segments)
-        return segments.get(0);
+        // Créer un objet composite pour contenir tous les segments
+        GraphiqueComposite composite = new GraphiqueComposite();
+        for (GLigne segment : segments) {
+            composite.addGraphique(segment);
+        }
+        
+        return composite;
 	}
 
 	/**

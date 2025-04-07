@@ -2,7 +2,6 @@ package geoanalytique.model.geoobject.operation;
 
 import geoanalytique.exception.ArgumentOperationException;
 import geoanalytique.exception.IncorrectTypeOperationException;
-import geoanalytique.model.GeoObject;
 import geoanalytique.model.Point;
 import geoanalytique.util.Operation;
 
