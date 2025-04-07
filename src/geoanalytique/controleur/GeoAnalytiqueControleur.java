@@ -20,9 +20,19 @@ import java.awt.event.HierarchyBoundsListener;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 
+import javax.imageio.ImageIO;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 /**
  * Cette classe est le controleur/presenteur principale. Tous les evenements importants
@@ -72,6 +82,14 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
 		view.getBtnCreateCercle().addActionListener(this);
 		view.getBtnCreatePolygone().addActionListener(this);
 		view.getBtnExecuteOperation().addActionListener(this);
+		
+		// Ajouter les listeners pour les fonctionnalités avancées
+		view.getBtnZoomIn().addActionListener(this);
+		view.getBtnZoomOut().addActionListener(this);
+		view.getBtnZoomReset().addActionListener(this);
+		view.getBtnSaveImage().addActionListener(this);
+		view.getBtnSaveProject().addActionListener(this);
+		view.getBtnOpenProject().addActionListener(this);
 		
 		// Ajouter les listeners pour les listes d'objets et d'opérations
 		view.getListObjects().addListSelectionListener(e -> {
@@ -130,8 +148,22 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
 	public void actionPerformed(ActionEvent e) {
 		Object source = e.getSource();
 		
+		// Traiter les actions pour les fonctionnalités avancées
+		if (source == view.getBtnZoomIn()) {
+            view.getCanvas().zoomIn();
+        } else if (source == view.getBtnZoomOut()) {
+            view.getCanvas().zoomOut();
+        } else if (source == view.getBtnZoomReset()) {
+            view.getCanvas().resetZoom();
+        } else if (source == view.getBtnSaveImage()) {
+            saveCanvasAsImage();
+        } else if (source == view.getBtnSaveProject()) {
+            saveProject();
+        } else if (source == view.getBtnOpenProject()) {
+            openProject();
+        }
 		// Traiter les actions des boutons de création d'objets
-		if (source == view.getBtnCreatePoint()) {
+		else if (source == view.getBtnCreatePoint()) {
 			// Demander les coordonnées du point
 			try {
 				String name = JOptionPane.showInputDialog(view, "Nom du point:", "Point" + objs.size());
@@ -872,4 +904,143 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
 		
 		return distanceToLine <= tolerance && inBox;
 	}
+
+	/**
+     * Sauvegarde le canevas sous forme d'image
+     */
+    private void saveCanvasAsImage() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Enregistrer l'image");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("PNG Image", "png"));
+        fileChooser.setFileFilter(new FileNameExtensionFilter("JPEG Image", "jpg"));
+        
+        int userSelection = fileChooser.showSaveDialog(view);
+        
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            String extension = ((FileNameExtensionFilter) fileChooser.getFileFilter()).getExtensions()[0];
+            
+            // S'assurer que le fichier a la bonne extension
+            if (!fileToSave.getName().toLowerCase().endsWith("." + extension)) {
+                fileToSave = new File(fileToSave.getAbsolutePath() + "." + extension);
+            }
+            
+            try {
+                // Créer une image à partir du canevas
+                BufferedImage image = new BufferedImage(
+                    view.getCanvas().getWidth(),
+                    view.getCanvas().getHeight(),
+                    BufferedImage.TYPE_INT_RGB
+                );
+                
+                // Rendre le canevas sur l'image
+                view.getCanvas().paint(image.getGraphics());
+                
+                // Enregistrer l'image
+                ImageIO.write(image, extension, fileToSave);
+                
+                JOptionPane.showMessageDialog(view,
+                    "Image enregistrée avec succès: " + fileToSave.getName(),
+                    "Enregistrement réussi",
+                    JOptionPane.INFORMATION_MESSAGE);
+                
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(view,
+                    "Erreur lors de l'enregistrement de l'image: " + ex.getMessage(),
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+    
+    /**
+     * Sauvegarde le projet courant (tous les objets géométriques)
+     */
+    private void saveProject() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Enregistrer le projet");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Projet GéoAnalytique", "geo"));
+        
+        int userSelection = fileChooser.showSaveDialog(view);
+        
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            
+            // S'assurer que le fichier a la bonne extension
+            if (!fileToSave.getName().toLowerCase().endsWith(".geo")) {
+                fileToSave = new File(fileToSave.getAbsolutePath() + ".geo");
+            }
+            
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(fileToSave))) {
+                // Enregistrer le nombre d'objets
+                oos.writeInt(objs.size());
+                
+                // Enregistrer chaque objet
+                for (GeoObject obj : objs) {
+                    oos.writeObject(obj);
+                }
+                
+                JOptionPane.showMessageDialog(view,
+                    "Projet enregistré avec succès: " + fileToSave.getName(),
+                    "Enregistrement réussi",
+                    JOptionPane.INFORMATION_MESSAGE);
+                
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(view,
+                    "Erreur lors de l'enregistrement du projet: " + ex.getMessage(),
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+    
+    /**
+     * Ouvre un projet précédemment sauvegardé
+     */
+    private void openProject() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Ouvrir un projet");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Projet GéoAnalytique", "geo"));
+        
+        int userSelection = fileChooser.showOpenDialog(view);
+        
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToOpen = fileChooser.getSelectedFile();
+            
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(fileToOpen))) {
+                // Effacer les objets existants
+                objs.clear();
+                view.getCanvas().clear();
+                
+                // Lire le nombre d'objets
+                int count = ois.readInt();
+                
+                // Lire chaque objet
+                for (int i = 0; i < count; i++) {
+                    GeoObject obj = (GeoObject) ois.readObject();
+                    
+                    // Mettre à jour le contrôleur dans l'objet
+                    obj.setControleur(this);
+                    
+                    // Ajouter l'objet
+                    objs.add(obj);
+                }
+                
+                // Mettre à jour la vue
+                updateObjectsList();
+                recalculPoints();
+                
+                JOptionPane.showMessageDialog(view,
+                    "Projet ouvert avec succès: " + fileToOpen.getName(),
+                    "Ouverture réussie",
+                    JOptionPane.INFORMATION_MESSAGE);
+                
+            } catch (IOException | ClassNotFoundException ex) {
+                JOptionPane.showMessageDialog(view,
+                    "Erreur lors de l'ouverture du projet: " + ex.getMessage(),
+                    "Erreur",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 }

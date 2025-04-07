@@ -16,6 +16,8 @@ import java.awt.Font;
 import java.awt.GridLayout;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -23,6 +25,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.TitledBorder;
 
@@ -46,6 +49,14 @@ public class GeoAnalytiqueGUI extends JPanel {
    private JButton btnExecuteOperation;
    private JButton btnSupprimer;
    private JButton btnRenommer;
+   
+   // Nouveaux boutons pour les fonctionnalités avancées
+   private JButton btnZoomIn;
+   private JButton btnZoomOut;
+   private JButton btnZoomReset;
+   private JButton btnSaveImage;
+   private JButton btnSaveProject;
+   private JButton btnOpenProject;
    
    /**
     * Constructeur de l'interface graphique principale
@@ -79,12 +90,21 @@ public class GeoAnalytiqueGUI extends JPanel {
        this.add(grille, BorderLayout.CENTER);
        this.add(rightPanel, BorderLayout.EAST);
        
-       // Panneau du haut avec le titre
-       JPanel headerPanel = new JPanel();
-       headerPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+       // Panneau du haut avec le titre et la barre d'outils
+       JPanel headerPanel = new JPanel(new BorderLayout());
+       
+       // Ajout du titre
+       JPanel titlePanel = new JPanel();
+       titlePanel.setLayout(new FlowLayout(FlowLayout.CENTER));
        JLabel titleLabel = new JLabel("GéoAnalytique");
        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-       headerPanel.add(titleLabel);
+       titlePanel.add(titleLabel);
+       headerPanel.add(titlePanel, BorderLayout.NORTH);
+       
+       // Création de la barre d'outils
+       JToolBar toolbar = createToolbar();
+       headerPanel.add(toolbar, BorderLayout.SOUTH);
+       
        this.add(headerPanel, BorderLayout.NORTH);
        
        // Panneau du bas avec le statut
@@ -93,6 +113,37 @@ public class GeoAnalytiqueGUI extends JPanel {
        JLabel statusLabel = new JLabel("Prêt");
        statusPanel.add(statusLabel);
        this.add(statusPanel, BorderLayout.SOUTH);
+   }
+   
+   /**
+    * Crée la barre d'outils avec les fonctionnalités étendues
+    * @return Barre d'outils avec les boutons
+    */
+   private JToolBar createToolbar() {
+       JToolBar toolbar = new JToolBar();
+       toolbar.setFloatable(false);
+       
+       // Boutons de zoom
+       btnZoomIn = new JButton("Zoom +");
+       btnZoomOut = new JButton("Zoom -");
+       btnZoomReset = new JButton("Reset Zoom");
+       
+       // Boutons de sauvegarde/chargement
+       btnSaveImage = new JButton("Enregistrer Image");
+       btnSaveProject = new JButton("Enregistrer Projet");
+       btnOpenProject = new JButton("Ouvrir Projet");
+       
+       // Ajout des boutons à la barre d'outils
+       toolbar.add(btnZoomIn);
+       toolbar.add(btnZoomOut);
+       toolbar.add(btnZoomReset);
+       toolbar.addSeparator();
+       toolbar.add(btnSaveImage);
+       toolbar.addSeparator();
+       toolbar.add(btnSaveProject);
+       toolbar.add(btnOpenProject);
+       
+       return toolbar;
    }
    
    /**
@@ -291,5 +342,53 @@ public class GeoAnalytiqueGUI extends JPanel {
      */
     public JButton getBtnRenommer() {
         return btnRenommer;
+    }
+    
+    /**
+     * Retourne le bouton de zoom avant
+     * @return Bouton de zoom avant
+     */
+    public JButton getBtnZoomIn() {
+        return btnZoomIn;
+    }
+    
+    /**
+     * Retourne le bouton de zoom arrière
+     * @return Bouton de zoom arrière
+     */
+    public JButton getBtnZoomOut() {
+        return btnZoomOut;
+    }
+    
+    /**
+     * Retourne le bouton de réinitialisation du zoom
+     * @return Bouton de réinitialisation du zoom
+     */
+    public JButton getBtnZoomReset() {
+        return btnZoomReset;
+    }
+    
+    /**
+     * Retourne le bouton d'enregistrement d'image
+     * @return Bouton d'enregistrement d'image
+     */
+    public JButton getBtnSaveImage() {
+        return btnSaveImage;
+    }
+    
+    /**
+     * Retourne le bouton d'enregistrement de projet
+     * @return Bouton d'enregistrement de projet
+     */
+    public JButton getBtnSaveProject() {
+        return btnSaveProject;
+    }
+    
+    /**
+     * Retourne le bouton d'ouverture de projet
+     * @return Bouton d'ouverture de projet
+     */
+    public JButton getBtnOpenProject() {
+        return btnOpenProject;
     }
 }

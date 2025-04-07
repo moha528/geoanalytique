@@ -33,12 +33,59 @@ public class GeoAnalytiqueView extends javax.swing.JPanel {
     private final Font LABEL_FONT = new Font("Arial", Font.PLAIN, 10);
     private final Color SELECTION_COLOR = Color.RED;
     
+    // Zoom et déplacement
+    private double zoomFactor = 1.0;
+    private double zoomIncrement = 0.2;
+    private double minZoom = 0.2;
+    private double maxZoom = 5.0;
+    private int panX = 0;
+    private int panY = 0;
+    private boolean isDragging = false;
+    private int dragStartX;
+    private int dragStartY;
+    
     /** Creates new form GeoAnalytiqueView */
     public GeoAnalytiqueView() {
         initComponents();
         graphiques = new ArrayList<Graphique>();
         selectedGraphiques = new ArrayList<Graphique>();
         setBackground(Color.WHITE);
+        
+        // Ajout du support pour le glisser-déposer (pan)
+        addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                if (evt.getButton() == java.awt.event.MouseEvent.BUTTON3) { // Clic droit
+                    isDragging = true;
+                    dragStartX = evt.getX();
+                    dragStartY = evt.getY();
+                    setCursor(new java.awt.Cursor(java.awt.Cursor.MOVE_CURSOR));
+                }
+            }
+            
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                if (isDragging) {
+                    isDragging = false;
+                    setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+                }
+            }
+        });
+        
+        addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseDragged(java.awt.event.MouseEvent evt) {
+                if (isDragging) {
+                    int dx = evt.getX() - dragStartX;
+                    int dy = evt.getY() - dragStartY;
+                    
+                    panX += dx;
+                    panY += dy;
+                    
+                    dragStartX = evt.getX();
+                    dragStartY = evt.getY();
+                    
+                    repaint();
+                }
+            }
+        });
     }
     
     /**
@@ -116,6 +163,10 @@ public class GeoAnalytiqueView extends javax.swing.JPanel {
         
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        // Appliquer le déplacement et le zoom
+        g2d.translate(panX, panY);
+        g2d.scale(zoomFactor, zoomFactor);
         
         // Dessiner la grille
         drawGrid(g2d);
@@ -220,5 +271,43 @@ public class GeoAnalytiqueView extends javax.swing.JPanel {
         graphiques.remove(c);
         selectedGraphiques.remove(c);
         repaint();
+    }
+
+    /**
+     * Augmente le niveau de zoom
+     */
+    public void zoomIn() {
+        if (zoomFactor < maxZoom) {
+            zoomFactor += zoomIncrement;
+            repaint();
+        }
+    }
+
+    /**
+     * Diminue le niveau de zoom
+     */
+    public void zoomOut() {
+        if (zoomFactor > minZoom) {
+            zoomFactor -= zoomIncrement;
+            repaint();
+        }
+    }
+
+    /**
+     * Réinitialise le zoom et le déplacement
+     */
+    public void resetZoom() {
+        zoomFactor = 1.0;
+        panX = 0;
+        panY = 0;
+        repaint();
+    }
+
+    /**
+     * Obtient le facteur de zoom actuel
+     * @return Le facteur de zoom
+     */
+    public double getZoomFactor() {
+        return zoomFactor;
     }
 }

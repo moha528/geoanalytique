@@ -5,18 +5,20 @@ import geoanalytique.controleur.GeoAnalytiqueControleur;
 import geoanalytique.exception.VisiteurException;
 import geoanalytique.model.geoobject.operation.ChangeNomOperation;
 import geoanalytique.util.Operation;
+import java.io.Serializable;
 import java.util.ArrayList;
 
 /**
  * Classe de base a tous objets geometriques
  * 
  */
-public abstract class GeoObject {
+public abstract class GeoObject implements Serializable {
+    private static final long serialVersionUID = 1L;
     private static int count = 0;
     private ArrayList<Operation> operations;
     
     private String name;
-    private GeoAnalytiqueControleur controleur;
+    private transient GeoAnalytiqueControleur controleur;
 
     // Ce constructeur EST INTERDIT d'utilisation
     // PAR CONSEQUENT IL NE FAUT PAS LE MODIFIER
@@ -98,5 +100,22 @@ public abstract class GeoObject {
      * @throws VisiteurException Si une erreur survient pendant la visite
      */
     public abstract <T> T visitor(GeoObjectVisitor<T> obj) throws VisiteurException;
+
+    /**
+     * Définit le contrôleur associé à cet objet
+     * Utilisé principalement lors de la désérialisation
+     * @param controleur Nouveau contrôleur
+     */
+    public void setControleur(GeoAnalytiqueControleur controleur) {
+        this.controleur = controleur;
+    }
+    
+    /**
+     * Retourne le contrôleur associé à cet objet
+     * @return Contrôleur associé
+     */
+    public GeoAnalytiqueControleur getControleur() {
+        return controleur;
+    }
 }
 
