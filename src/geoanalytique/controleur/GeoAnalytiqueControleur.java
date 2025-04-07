@@ -63,8 +63,17 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
          */
 	public void addObjet(GeoObject obj) {
             objs.add(obj);
-            recalculPoints();	
-            // TODO: a completer
+            
+            // Mise à jour de la liste des objets dans l'interface
+            updateObjectsList();
+            
+            // Si aucun objet n'est sélectionné, on sélectionne ce nouvel objet
+            if (select == null) {
+                selectionner(obj);
+            }
+            
+            // Redessiner les points sur la vue
+            recalculPoints();
 	}
 	
 	
@@ -76,7 +85,16 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
          * @param object objet ayant subit une modification
          */
 	public void update(GeoObject object) {
-		// TODO: a completer
+            // Mise à jour de la liste des objets
+            updateObjectsList();
+            
+            // Si l'objet modifié est l'objet sélectionné, on met à jour la liste des opérations
+            if (object == select) {
+                updateOperationsList();
+            }
+            
+            // Redessiner la vue
+            recalculPoints();
 	}
 
 	public void actionPerformed(ActionEvent e) {
@@ -116,7 +134,33 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
          * @param o objet a selectionne
          */
 	private void selectionner(GeoObject o) {
-		// TODO: a completer
+            // Déselectionner l'objet actuel s'il y en a un
+            if (select != null) {
+                deselectionner();
+            }
+            
+            // Définir le nouvel objet sélectionné
+            select = o;
+            
+            // Mettre en évidence l'objet dans la liste des objets
+            int index = objs.indexOf(o);
+            if (index != -1) {
+                view.getListObjects().setSelectedIndex(index);
+            }
+            
+            // Mettre à jour la liste des opérations disponibles pour cet objet
+            updateOperationsList();
+            
+            // Mettre à jour la vue pour afficher l'objet sélectionné en surbrillance
+            try {
+                Dessinateur d = new Dessinateur(viewport);
+                Graphique g = o.visitor(d);
+                g.setCouleur(Color.RED); // Couleur de sélection
+                view.getCanvas().selectGraphique(g);
+                view.getCanvas().repaint();
+            } catch (VisiteurException e) {
+                e.printStackTrace();
+            }
 	}
 	
 	/**
@@ -125,10 +169,53 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
          * graphique a ce moment ainsi que les operations anciennement realisable.
          */	
 	private void deselectionner() {
-		// TODO: a completer
+            if (select != null) {
+                // Effacer la sélection actuelle
+                select = null;
+                
+                // Désélectionner dans la liste d'objets
+                view.getListObjects().clearSelection();
+                
+                // Vider la liste des opérations
+                view.getListOperations().setListData(new String[0]);
+                
+                // Redessiner la vue sans surbrillance
+                recalculPoints();
+            }
 	}
 	
-
+    /**
+     * Met à jour la liste des objets dans l'interface
+     */
+    private void updateObjectsList() {
+        // Créer un tableau de noms d'objets
+        String[] objectNames = new String[objs.size()];
+        for (int i = 0; i < objs.size(); i++) {
+            objectNames[i] = objs.get(i).getName();
+        }
+        
+        // Mettre à jour la JList dans l'interface
+        view.getListObjects().setListData(objectNames);
+    }
+    
+    /**
+     * Met à jour la liste des opérations pour l'objet sélectionné
+     */
+    private void updateOperationsList() {
+        if (select != null) {
+            // Récupérer les opérations disponibles pour l'objet sélectionné
+            ArrayList<Operation> operations = select.getOperations();
+            String[] operationNames = new String[operations.size()];
+            
+            // Créer un tableau de noms d'opérations
+            for (int i = 0; i < operations.size(); i++) {
+                operationNames[i] = operations.get(i).getTitle();
+            }
+            
+            // Mettre à jour la JList dans l'interface
+            view.getListOperations().setListData(operationNames);
+        }
+    }
 
         /**
          * Cette fonction est appele uniquement lorsque la liaison controleur et
