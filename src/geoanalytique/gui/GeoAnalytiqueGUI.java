@@ -131,9 +131,9 @@ public class GeoAnalytiqueGUI extends JPanel {
        filePanel.setOpaque(false);
        
        // Boutons de zoom avec icônes
-       btnZoomIn = new JButton("\uD83D\uDD0D+");
-       btnZoomOut = new JButton("\uD83D\uDD0E-");
-       btnZoomReset = new JButton("⟲");
+       btnZoomIn = new JButton("Zoom +");
+       btnZoomOut = new JButton("Zoom -");
+       btnZoomReset = new JButton("Reset");
        
        // Style des boutons de zoom
        btnZoomIn.setToolTipText("Agrandir la vue");
@@ -150,9 +150,9 @@ public class GeoAnalytiqueGUI extends JPanel {
        zoomPanel.add(btnZoomReset);
        
        // Boutons de sauvegarde/chargement avec icônes
-       btnSaveImage = new JButton("\uD83D\uDDBC");
-       btnSaveProject = new JButton("\uD83D\uDCBE");
-       btnOpenProject = new JButton("\uD83D\uDCC2");
+       btnSaveImage = new JButton("Image");
+       btnSaveProject = new JButton("Sauver");
+       btnOpenProject = new JButton("Ouvrir");
        
        // Style des boutons de fichier
        btnSaveImage.setToolTipText("Enregistrer la vue comme image");
