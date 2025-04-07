@@ -44,6 +44,8 @@ public class GeoAnalytiqueGUI extends JPanel {
    private JButton btnCreateCercle;
    private JButton btnCreatePolygone;
    private JButton btnExecuteOperation;
+   private JButton btnSupprimer;
+   private JButton btnRenommer;
    
    /**
     * Constructeur de l'interface graphique principale
@@ -141,8 +143,8 @@ public class GeoAnalytiqueGUI extends JPanel {
        JPanel buttonPanel = new JPanel();
        buttonPanel.setLayout(new GridLayout(1, 2, 5, 5));
        
-       JButton btnSupprimer = new JButton("Supprimer");
-       JButton btnRenommer = new JButton("Renommer");
+       btnSupprimer = new JButton("Supprimer");
+       btnRenommer = new JButton("Renommer");
        
        buttonPanel.add(btnSupprimer);
        buttonPanel.add(btnRenommer);
@@ -273,5 +275,21 @@ public class GeoAnalytiqueGUI extends JPanel {
      */
     public JList<String> getListOperations() {
         return listOperations;
+    }
+    
+    /**
+     * Retourne le bouton de suppression d'objet
+     * @return Bouton de suppression
+     */
+    public JButton getBtnSupprimer() {
+        return btnSupprimer;
+    }
+    
+    /**
+     * Retourne le bouton de renommage d'objet
+     * @return Bouton de renommage
+     */
+    public JButton getBtnRenommer() {
+        return btnRenommer;
     }
 }

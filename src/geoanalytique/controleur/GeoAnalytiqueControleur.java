@@ -39,6 +39,8 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
 	
 	private transient GeoObject select;
 	
+	private boolean isSelectionProgrammatic = false;
+	
         
 		
 	/**
@@ -51,7 +53,24 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
 		objs = new ArrayList<GeoObject>();
 		this.view = view;
 		viewport = new ViewPort(view.getCanvas().getWidth(),view.getCanvas().getWidth());
-		// TODO: A completer avec vos modifications
+		
+		// Ajouter les listeners pour les boutons de création d'objets
+		view.getBtnCreatePoint().addActionListener(this);
+		view.getBtnCreateSegment().addActionListener(this);
+		view.getBtnCreateDroite().addActionListener(this);
+		view.getBtnCreateCercle().addActionListener(this);
+		view.getBtnCreatePolygone().addActionListener(this);
+		view.getBtnExecuteOperation().addActionListener(this);
+		
+		// Ajouter les listeners pour les listes d'objets et d'opérations
+		view.getListObjects().addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting() && !isSelectionProgrammatic) {
+				int selectedIndex = view.getListObjects().getSelectedIndex();
+				if (selectedIndex >= 0 && selectedIndex < objs.size()) {
+					selectionner(objs.get(selectedIndex));
+				}
+			}
+		});
 	}
 
         /**
@@ -98,7 +117,269 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
 	}
 
 	public void actionPerformed(ActionEvent e) {
-		// TODO: a completer
+		Object source = e.getSource();
+		
+		// Traiter les actions des boutons de création d'objets
+		if (source == view.getBtnCreatePoint()) {
+			// Demander les coordonnées du point
+			try {
+				String name = JOptionPane.showInputDialog(view, "Nom du point:", "Point" + objs.size());
+				if (name == null) return; // Annulation
+				
+				String xStr = JOptionPane.showInputDialog(view, "Coordonnée X:", "0");
+				if (xStr == null) return; // Annulation
+				double x = Double.parseDouble(xStr);
+				
+				String yStr = JOptionPane.showInputDialog(view, "Coordonnée Y:", "0");
+				if (yStr == null) return; // Annulation
+				double y = Double.parseDouble(yStr);
+				
+				// Créer le point et l'ajouter
+				addObjet(new geoanalytique.model.Point(name, x, y, this));
+			} catch (NumberFormatException ex) {
+				JOptionPane.showMessageDialog(view, "Valeurs numériques invalides", "Erreur", JOptionPane.ERROR_MESSAGE);
+			}
+		} else if (source == view.getBtnCreateSegment()) {
+			// Créer un segment à partir de deux points existants
+			try {
+				// Récupérer la liste des points disponibles
+				ArrayList<geoanalytique.model.Point> points = new ArrayList<>();
+				for (GeoObject obj : objs) {
+					if (obj instanceof geoanalytique.model.Point) {
+						points.add((geoanalytique.model.Point) obj);
+					}
+				}
+				
+				if (points.size() < 2) {
+					JOptionPane.showMessageDialog(view, "Vous devez avoir au moins 2 points pour créer un segment", 
+												"Erreur", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+				
+				String[] pointNames = new String[points.size()];
+				for (int i = 0; i < points.size(); i++) {
+					pointNames[i] = points.get(i).getName();
+				}
+				
+				String name = JOptionPane.showInputDialog(view, "Nom du segment:", "Segment" + objs.size());
+				if (name == null) return; // Annulation
+				
+				String p1Str = (String) JOptionPane.showInputDialog(view, "Premier point:", "Sélectionner un point", 
+																JOptionPane.QUESTION_MESSAGE, null, pointNames, pointNames[0]);
+				if (p1Str == null) return; // Annulation
+				
+				String p2Str = (String) JOptionPane.showInputDialog(view, "Second point:", "Sélectionner un point", 
+																JOptionPane.QUESTION_MESSAGE, null, pointNames, pointNames[0]);
+				if (p2Str == null) return; // Annulation
+				
+				// Trouver les points correspondants
+				geoanalytique.model.Point p1 = null, p2 = null;
+				for (geoanalytique.model.Point p : points) {
+					if (p.getName().equals(p1Str)) p1 = p;
+					if (p.getName().equals(p2Str)) p2 = p;
+				}
+				
+				// Créer et ajouter le segment
+				if (p1 != null && p2 != null) {
+					addObjet(new geoanalytique.model.Segment(p1, p2, this));
+				}
+				
+			} catch (Exception ex) {
+				JOptionPane.showMessageDialog(view, "Erreur lors de la création du segment: " + ex.getMessage(), 
+										   "Erreur", JOptionPane.ERROR_MESSAGE);
+			}
+		} else if (source == view.getBtnCreateDroite()) {
+			// Similaire au segment, créer une droite à partir d'un point et d'une pente
+			try {
+				// Récupérer la liste des points existants
+				ArrayList<geoanalytique.model.Point> points = new ArrayList<>();
+				for (GeoObject obj : objs) {
+					if (obj instanceof geoanalytique.model.Point) {
+						points.add((geoanalytique.model.Point) obj);
+					}
+				}
+				
+				if (points.isEmpty()) {
+					JOptionPane.showMessageDialog(view, "Vous devez avoir au moins 1 point pour créer une droite", 
+												"Erreur", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+				
+				String[] pointNames = new String[points.size()];
+				for (int i = 0; i < points.size(); i++) {
+					pointNames[i] = points.get(i).getName();
+				}
+				
+				String name = JOptionPane.showInputDialog(view, "Nom de la droite:", "Droite" + objs.size());
+				if (name == null) return; // Annulation
+				
+				String pStr = (String) JOptionPane.showInputDialog(view, "Point de la droite:", "Sélectionner un point", 
+																JOptionPane.QUESTION_MESSAGE, null, pointNames, pointNames[0]);
+				if (pStr == null) return; // Annulation
+				
+				String penteStr = JOptionPane.showInputDialog(view, "Pente de la droite:", "1");
+				if (penteStr == null) return; // Annulation
+				double pente = Double.parseDouble(penteStr);
+				
+				// Trouver le point correspondant
+				geoanalytique.model.Point p = null;
+				for (geoanalytique.model.Point point : points) {
+					if (point.getName().equals(pStr)) {
+						p = point;
+						break;
+					}
+				}
+				
+				// Créer et ajouter la droite
+				if (p != null) {
+					addObjet(new geoanalytique.model.Droite(name, p, pente, this));
+				}
+				
+			} catch (NumberFormatException ex) {
+				JOptionPane.showMessageDialog(view, "Valeur de pente invalide", "Erreur", JOptionPane.ERROR_MESSAGE);
+			} catch (Exception ex) {
+				JOptionPane.showMessageDialog(view, "Erreur lors de la création de la droite: " + ex.getMessage(), 
+										   "Erreur", JOptionPane.ERROR_MESSAGE);
+			}
+		} else if (source == view.getBtnCreateCercle()) {
+			// Créer un cercle à partir d'un centre et d'un rayon
+			try {
+				// Récupérer la liste des points existants pour le centre
+				ArrayList<geoanalytique.model.Point> points = new ArrayList<>();
+				for (GeoObject obj : objs) {
+					if (obj instanceof geoanalytique.model.Point) {
+						points.add((geoanalytique.model.Point) obj);
+					}
+				}
+				
+				if (points.isEmpty()) {
+					JOptionPane.showMessageDialog(view, "Vous devez avoir au moins 1 point pour créer un cercle", 
+												"Erreur", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+				
+				String[] pointNames = new String[points.size()];
+				for (int i = 0; i < points.size(); i++) {
+					pointNames[i] = points.get(i).getName();
+				}
+				
+				String name = JOptionPane.showInputDialog(view, "Nom du cercle:", "Cercle" + objs.size());
+				if (name == null) return; // Annulation
+				
+				String centreStr = (String) JOptionPane.showInputDialog(view, "Centre du cercle:", "Sélectionner un point", 
+																	JOptionPane.QUESTION_MESSAGE, null, pointNames, pointNames[0]);
+				if (centreStr == null) return; // Annulation
+				
+				String rayonStr = JOptionPane.showInputDialog(view, "Rayon du cercle:", "1");
+				if (rayonStr == null) return; // Annulation
+				double rayon = Double.parseDouble(rayonStr);
+				
+				// Trouver le point correspondant
+				geoanalytique.model.Point centre = null;
+				for (geoanalytique.model.Point p : points) {
+					if (p.getName().equals(centreStr)) {
+						centre = p;
+						break;
+					}
+				}
+				
+				// Créer et ajouter le cercle
+				if (centre != null) {
+					addObjet(new geoanalytique.model.Cercle(name, centre, rayon, this));
+				}
+				
+			} catch (NumberFormatException ex) {
+				JOptionPane.showMessageDialog(view, "Valeur de rayon invalide", "Erreur", JOptionPane.ERROR_MESSAGE);
+			} catch (Exception ex) {
+				JOptionPane.showMessageDialog(view, "Erreur lors de la création du cercle: " + ex.getMessage(), 
+										   "Erreur", JOptionPane.ERROR_MESSAGE);
+			}
+		} else if (source == view.getBtnCreatePolygone()) {
+			// Créer un polygone à partir d'une liste de points
+			try {
+				// Récupérer la liste des points existants
+				ArrayList<geoanalytique.model.Point> points = new ArrayList<>();
+				for (GeoObject obj : objs) {
+					if (obj instanceof geoanalytique.model.Point) {
+						points.add((geoanalytique.model.Point) obj);
+					}
+				}
+				
+				if (points.size() < 3) {
+					JOptionPane.showMessageDialog(view, "Vous devez avoir au moins 3 points pour créer un polygone", 
+												"Erreur", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+				
+				String[] pointNames = new String[points.size()];
+				for (int i = 0; i < points.size(); i++) {
+					pointNames[i] = points.get(i).getName();
+				}
+				
+				String name = JOptionPane.showInputDialog(view, "Nom du polygone:", "Polygone" + objs.size());
+				if (name == null) return; // Annulation
+				
+				// Demander le nombre de sommets
+				String nbPointsStr = JOptionPane.showInputDialog(view, "Nombre de sommets (3 minimum):", "3");
+				if (nbPointsStr == null) return; // Annulation
+				int nbPoints = Integer.parseInt(nbPointsStr);
+				
+				if (nbPoints < 3) {
+					JOptionPane.showMessageDialog(view, "Un polygone doit avoir au moins 3 sommets", 
+												"Erreur", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+				
+				if (nbPoints > points.size()) {
+					JOptionPane.showMessageDialog(view, "Il n'y a pas assez de points disponibles", 
+												"Erreur", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+				
+				// Sélectionner les points pour le polygone
+				ArrayList<geoanalytique.model.Point> sommets = new ArrayList<>();
+				for (int i = 0; i < nbPoints; i++) {
+					String pointStr = (String) JOptionPane.showInputDialog(view, "Point " + (i+1) + ":", 
+															"Sélectionner un point", JOptionPane.QUESTION_MESSAGE, 
+															null, pointNames, pointNames[0]);
+					if (pointStr == null) return; // Annulation
+					
+					// Trouver le point correspondant
+					for (geoanalytique.model.Point p : points) {
+						if (p.getName().equals(pointStr)) {
+							sommets.add(p);
+							break;
+						}
+					}
+				}
+				
+				// Créer et ajouter le polygone
+				if (sommets.size() == nbPoints) {
+					addObjet(new geoanalytique.model.Polygone(name, sommets, this));
+				}
+				
+			} catch (NumberFormatException ex) {
+				JOptionPane.showMessageDialog(view, "Valeur numérique invalide", "Erreur", JOptionPane.ERROR_MESSAGE);
+			} catch (Exception ex) {
+				JOptionPane.showMessageDialog(view, "Erreur lors de la création du polygone: " + ex.getMessage(), 
+										   "Erreur", JOptionPane.ERROR_MESSAGE);
+			}
+		} else if (source == view.getBtnExecuteOperation()) {
+			// Exécuter l'opération sélectionnée
+			if (select != null) {
+				int selectedIndex = view.getListOperations().getSelectedIndex();
+				if (selectedIndex >= 0 && selectedIndex < select.getOperations().size()) {
+					Operation operation = select.getOperations().get(selectedIndex);
+					try {
+						lanceOperation(select, operation);
+					} catch (Exception ex) {
+						JOptionPane.showMessageDialog(view, 
+							"Erreur lors de l'exécution de l'opération: " + ex.getMessage(), 
+							"Erreur", JOptionPane.ERROR_MESSAGE);
+					}
+				}
+			}
+		}
 	}
 
 	public void mouseClicked(MouseEvent e) {
@@ -123,7 +404,29 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
 	}
 
 	public void mousePressed(MouseEvent e) {
-            // TODO: a completer pour un clique souris dans le canevas
+		// Convertir les coordonnées de la souris en coordonnées du monde réel
+		int canvasX = e.getX();
+		int canvasY = e.getY();
+		
+		// Déselectionner l'objet actuel
+		deselectionner();
+		
+		// Rechercher un objet géométrique proche du point cliqué
+		for (GeoObject obj : objs) {
+			try {
+				// Convertir les coordonnées de l'objet en coordonnées écran
+				Dessinateur d = new Dessinateur(viewport);
+				Graphique g = obj.visitor(d);
+				
+				// Vérifier si le clic est sur cet objet
+				if (isNear(g, canvasX, canvasY, 10)) { // 10 pixels de tolérance
+					selectionner(obj);
+					break;
+				}
+			} catch (VisiteurException ex) {
+				// Ignorer et continuer avec le prochain objet
+			}
+		}
 	}
 
         /**
@@ -145,7 +448,11 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
             // Mettre en évidence l'objet dans la liste des objets
             int index = objs.indexOf(o);
             if (index != -1) {
+                // Set the flag to true before programmatically setting the selection
+                isSelectionProgrammatic = true;
                 view.getListObjects().setSelectedIndex(index);
+                // Reset the flag after setting the selection
+                isSelectionProgrammatic = false;
             }
             
             // Mettre à jour la liste des opérations disponibles pour cet objet
@@ -228,9 +535,119 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
             view.getCanvas().addMouseListener(this);
             view.getCanvas().addHierarchyBoundsListener(this);
             
-            // TODO: a completer si necessaire
+            // Ajouter les listeners pour les boutons d'exécution d'opérations
+            view.getBtnExecuteOperation().addActionListener(e -> {
+                if (select != null) {
+                    int selectedIndex = view.getListOperations().getSelectedIndex();
+                    if (selectedIndex >= 0 && selectedIndex < select.getOperations().size()) {
+                        Operation operation = select.getOperations().get(selectedIndex);
+                        try {
+                            lanceOperation(select, operation);
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(view, 
+                                "Erreur lors de l'exécution de l'opération: " + ex.getMessage(), 
+                                "Erreur", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                }
+            });
             
+            // Ajouter un listener pour le bouton Supprimer
+            view.getBtnSupprimer().addActionListener(e -> {
+                int selectedIndex = view.getListObjects().getSelectedIndex();
+                if (selectedIndex >= 0 && selectedIndex < objs.size()) {
+                    // Vérifier les dépendances avant de supprimer
+                    GeoObject objToRemove = objs.get(selectedIndex);
+                    
+                    // Demander confirmation
+                    int confirm = JOptionPane.showConfirmDialog(view,
+                        "Êtes-vous sûr de vouloir supprimer l'objet " + objToRemove.getName() + " ?",
+                        "Confirmation de suppression",
+                        JOptionPane.YES_NO_OPTION);
+                        
+                    if (confirm == JOptionPane.YES_OPTION) {
+                        // Si l'objet est sélectionné, le désélectionner d'abord
+                        if (objToRemove == select) {
+                            deselectionner();
+                        }
+                        
+                        // Supprimer l'objet de la liste
+                        objs.remove(selectedIndex);
+                        
+                        // Mettre à jour l'interface
+                        updateObjectsList();
+                        recalculPoints();
+                    }
+                }
+            });
             
+            // Ajouter un listener pour le bouton Renommer
+            view.getBtnRenommer().addActionListener(e -> {
+                int selectedIndex = view.getListObjects().getSelectedIndex();
+                if (selectedIndex >= 0 && selectedIndex < objs.size()) {
+                    GeoObject objToRename = objs.get(selectedIndex);
+                    
+                    // Demander le nouveau nom
+                    String newName = JOptionPane.showInputDialog(view,
+                        "Nouveau nom pour " + objToRename.getName() + " :",
+                        objToRename.getName());
+                        
+                    if (newName != null && !newName.isEmpty()) {
+                        // Vérifier que le nom n'est pas déjà utilisé
+                        boolean nameExists = false;
+                        for (GeoObject obj : objs) {
+                            if (obj != objToRename && obj.getName().equals(newName)) {
+                                nameExists = true;
+                                break;
+                            }
+                        }
+                        
+                        if (nameExists) {
+                            JOptionPane.showMessageDialog(view,
+                                "Ce nom est déjà utilisé par un autre objet.",
+                                "Erreur de renommage",
+                                JOptionPane.ERROR_MESSAGE);
+                        } else {
+                            // Renommer l'objet
+                            try {
+                                // Utiliser l'opération de changement de nom si elle existe
+                                for (Operation op : objToRename.getOperations()) {
+                                    if (op.getTitle().contains("Changer le nom")) {
+                                        op.setArgument(0, newName);
+                                        op.calculer();
+                                        break;
+                                    }
+                                }
+                                
+                                // Mettre à jour l'interface
+                                updateObjectsList();
+                                
+                                // Si l'objet était sélectionné, mettre à jour la sélection
+                                if (objToRename == select) {
+                                    updateOperationsList();
+                                }
+                            } catch (Exception ex) {
+                                JOptionPane.showMessageDialog(view,
+                                    "Erreur lors du renommage: " + ex.getMessage(),
+                                    "Erreur",
+                                    JOptionPane.ERROR_MESSAGE);
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Gérer le redimensionnement du canevas
+            view.getCanvas().addComponentListener(new java.awt.event.ComponentAdapter() {
+                @Override
+                public void componentResized(java.awt.event.ComponentEvent e) {
+                    viewport.resize(view.getCanvas().getWidth(), view.getCanvas().getHeight());
+                    recalculPoints();
+                }
+            });
+            
+            // Dessiner la vue initiale
+            recalculPoints();
 	}
 
 	public void ancestorMoved(HierarchyEvent e) {
@@ -239,7 +656,9 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
 	}
 
 	public void ancestorResized(HierarchyEvent e) {
-	    // TODO: a completer si le canevas est redimentionnable
+	    // Mettre à jour le viewport lorsque le canevas est redimensionné
+	    viewport.resize(view.getCanvas().getWidth(), view.getCanvas().getHeight());
+	    recalculPoints();
 	}
 
         /**
@@ -369,5 +788,60 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
 				return o;
 		}
 		throw new ArgumentOperationException("Nom de l'objet introuvable");
+	}
+
+	/**
+	 * Vérifie si des coordonnées sont proches d'un graphique
+	 * @param g Graphique à tester
+	 * @param x Coordonnée X à tester
+	 * @param y Coordonnée Y à tester
+	 * @param tolerance Distance maximale considérée comme "proche"
+	 * @return true si les coordonnées sont proches du graphique
+	 */
+	private boolean isNear(Graphique g, int x, int y, int tolerance) {
+		// Pour simplifier, on considère que chaque objet est sélectionnable
+		// dans un rayon de 'tolerance' pixels autour de sa position
+		
+		// Traitement spécifique pour les différents types de graphiques
+		if (g instanceof GCoordonnee) {
+			GCoordonnee coord = (GCoordonnee) g;
+			int dx = coord.getX() - x;
+			int dy = coord.getY() - y;
+			return (dx * dx + dy * dy) <= tolerance * tolerance; // Distance euclidienne
+		} else if (g instanceof GLigne) {
+			GLigne ligne = (GLigne) g;
+			// Calcul de la distance d'un point à une ligne
+			return isNearLine(x, y, ligne.getX1(), ligne.getY1(), ligne.getX2(), ligne.getY2(), tolerance);
+		}
+		
+		// Par défaut, on considère qu'on est trop loin
+		return false;
+	}
+
+	/**
+	 * Vérifie si un point est proche d'une ligne
+	 * @param x Coordonnée X du point
+	 * @param y Coordonnée Y du point
+	 * @param x1 Coordonnée X du premier point de la ligne
+	 * @param y1 Coordonnée Y du premier point de la ligne
+	 * @param x2 Coordonnée X du second point de la ligne
+	 * @param y2 Coordonnée Y du second point de la ligne
+	 * @param tolerance Distance maximale considérée comme "proche"
+	 * @return true si le point est proche de la ligne
+	 */
+	private boolean isNearLine(int x, int y, int x1, int y1, int x2, int y2, int tolerance) {
+		// Calcul de la distance d'un point à une ligne
+		double lineLength = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+		if (lineLength == 0) return false; // Ligne de longueur nulle
+		
+		double distanceToLine = Math.abs((y2 - y1) * x - (x2 - x1) * y + x2 * y1 - y2 * x1) / lineLength;
+		
+		// Vérifier si le point est dans le rectangle englobant la ligne
+		boolean inBox = (x >= Math.min(x1, x2) - tolerance && 
+						x <= Math.max(x1, x2) + tolerance && 
+						y >= Math.min(y1, y2) - tolerance && 
+						y <= Math.max(y1, y2) + tolerance);
+		
+		return distanceToLine <= tolerance && inBox;
 	}
 }

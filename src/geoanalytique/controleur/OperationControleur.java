@@ -14,6 +14,10 @@ import java.awt.event.ActionListener;
  *
  */
 public class OperationControleur implements ActionListener {
+	private GeoObject targetObject;
+	private Operation operation;
+	private GeoAnalytiqueControleur owner;
+	
 	/**
          * Constructeur unique du listener.
          * @param o objet associe a l'operation
@@ -22,7 +26,9 @@ public class OperationControleur implements ActionListener {
          * @param owner controleur principale (contenant tous les objets)
          */
         public OperationControleur(GeoObject o, Operation ope, GeoAnalytiqueControleur owner) {
-            // TODO: a completer
+            this.targetObject = o;
+            this.operation = ope;
+            this.owner = owner;
 	}
 
         
@@ -32,7 +38,13 @@ public class OperationControleur implements ActionListener {
 	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
 	 */
 	public void actionPerformed(ActionEvent e) {
-		// TODO: a completer
+		try {
+            // Lancer l'opération via le contrôleur principal
+            owner.lanceOperation(targetObject, operation);
+        } catch (Exception ex) {
+            // Gérer les erreurs potentielles
+            System.err.println("Erreur lors de l'exécution de l'opération: " + ex.getMessage());
+        }
 	}
 
 }
