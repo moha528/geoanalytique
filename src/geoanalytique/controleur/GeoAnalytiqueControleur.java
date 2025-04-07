@@ -3,6 +3,8 @@ package geoanalytique.controleur;
 import geoanalytique.exception.ArgumentOperationException;
 import geoanalytique.exception.IncorrectTypeOperationException;
 import geoanalytique.exception.VisiteurException;
+import geoanalytique.graphique.GCoordonnee;
+import geoanalytique.graphique.GLigne;
 import geoanalytique.graphique.Graphique;
 import geoanalytique.gui.GeoAnalytiqueGUI;
 import geoanalytique.model.GeoObject;
@@ -10,6 +12,7 @@ import geoanalytique.model.ViewPort;
 import geoanalytique.util.Dessinateur;
 import geoanalytique.util.Operation;
 
+import java.awt.Color;
 import java.awt.HeadlessException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -162,6 +165,28 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
 		
             // on nettoie les anciennes images
             view.getCanvas().clear();
+            
+            // Ajout des axes Ox et Oy
+            // Axe des abscisses (Ox)
+            double xmin = viewport.getXMin();
+            double xmax = viewport.getXMax();
+            double ymin = viewport.getYMin();
+            double ymax = viewport.getYMax();
+            
+            // Convertir les coordonnées pour l'axe Ox (y = 0)
+            GCoordonnee oxStart = viewport.convert(xmin, 0);
+            GCoordonnee oxEnd = viewport.convert(xmax, 0);
+            // Créer la ligne pour l'axe Ox
+            GLigne axeX = new GLigne(oxStart.getX(), oxStart.getY(), oxEnd.getX(), oxEnd.getY(), Color.BLACK);
+            view.getCanvas().addGraphique(axeX);
+            
+            // Convertir les coordonnées pour l'axe Oy (x = 0)
+            GCoordonnee oyStart = viewport.convert(0, ymin);
+            GCoordonnee oyEnd = viewport.convert(0, ymax);
+            // Créer la ligne pour l'axe Oy
+            GLigne axeY = new GLigne(oyStart.getX(), oyStart.getY(), oyEnd.getX(), oyEnd.getY(), Color.BLACK);
+            view.getCanvas().addGraphique(axeY);
+            
             // redessine toutes les figures
             Dessinateur d = new Dessinateur(viewport);
             for (GeoObject o : objs) {
@@ -175,7 +200,6 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
             }
             
             view.getCanvas().repaint();
-            // TODO: a completer
 	}
 
 	
