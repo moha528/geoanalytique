@@ -29,6 +29,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
@@ -815,22 +816,53 @@ public class GeoAnalytiqueControleur implements ActionListener, MouseListener, H
 				e.printStackTrace();
 			}
 		}
-                // Dans notre application on autorise un resultat, que nous devons
-                // interprété. Pas de resultat correspond au pointeur null
+                // Dans notre application on autorise un résultat, que nous devons
+                // interpréter. Pas de résultat correspond au pointeur null
 		Object o = ope.calculer();
 		if(o != null) {
-                       // on a bien trouve un resultat. Mais on ne connait pas
-                       // sa nature on va donc le tester
-			if(GeoObject.class.isAssignableFrom(o.getClass())) {
-                            // c'est un objet analytique on l'ajoute dans notre systeme
-				addObjet((GeoObject) o);
-			}
-			else {
-                            // on ne connait pas le type, donc on l'avise a l'utilisateur
-				JOptionPane.showConfirmDialog(view, o, ope.getTitle(),JOptionPane.OK_OPTION);
-			}
-                        // TODO BONUS: proposer et modifier le traitement du resultat
-                        // pour pouvoir renvoyer plusieurs chose en meme temps
+                    // on a bien trouve un resultat. Mais on ne connait pas
+                    // sa nature on va donc le tester
+                    if(o instanceof List<?>) {
+                        // Gestion de plusieurs résultats (liste)
+                        List<?> resultats = (List<?>) o;
+                        if(!resultats.isEmpty()) {
+                            // Vérifier si c'est une liste d'objets géométriques
+                            boolean listeGeoObjects = true;
+                            for(Object resultat : resultats) {
+                                if(!(resultat instanceof GeoObject)) {
+                                    listeGeoObjects = false;
+                                    break;
+                                }
+                            }
+                            
+                            if(listeGeoObjects) {
+                                // Ajouter tous les objets géométriques au système
+                                for(Object resultat : resultats) {
+                                    addObjet((GeoObject) resultat);
+                                }
+                                
+                                // Afficher un message pour informer l'utilisateur
+                                if(resultats.size() > 0) {
+                                    JOptionPane.showMessageDialog(view, 
+                                        resultats.size() + " objets ont été créés", 
+                                        ope.getTitle(), 
+                                        JOptionPane.INFORMATION_MESSAGE);
+                                }
+                            } else {
+                                // Afficher les résultats à l'utilisateur
+                                JOptionPane.showMessageDialog(view, 
+                                    resultats.toString(), 
+                                    ope.getTitle(), 
+                                    JOptionPane.INFORMATION_MESSAGE);
+                            }
+                        }
+                    } else if(GeoObject.class.isAssignableFrom(o.getClass())) {
+                        // c'est un objet analytique on l'ajoute dans notre systeme
+                        addObjet((GeoObject) o);
+                    } else {
+                        // on ne connait pas le type, donc on l'avise a l'utilisateur
+                        JOptionPane.showConfirmDialog(view, o, ope.getTitle(), JOptionPane.OK_OPTION);
+                    }
 		}
 		recalculPoints();
 	}

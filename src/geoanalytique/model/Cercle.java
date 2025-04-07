@@ -3,6 +3,7 @@ package geoanalytique.model;
 import geoanalytique.exception.VisiteurException;
 import geoanalytique.util.GeoObjectVisitor;
 import geoanalytique.controleur.GeoAnalytiqueControleur;
+import geoanalytique.model.geoobject.operation.CalculIntersectionCercleDroiteOperation;
 import geoanalytique.model.geoobject.operation.CalculPerimetreCercleOperation;
 
 /**
@@ -44,6 +45,8 @@ public class Cercle extends Ellipse {
     private void initOperations() {
         // Ajouter l'opération pour calculer le périmètre
         getOperations().add(new CalculPerimetreCercleOperation(this));
+        // Ajouter l'opération pour calculer l'intersection avec une droite
+        getOperations().add(new CalculIntersectionCercleDroiteOperation(this, getControleur()));
     }
     
     /**
