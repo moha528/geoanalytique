@@ -8,26 +8,82 @@ package geoanalytique.view;
 
 import geoanalytique.graphique.Graphique; 
 
+import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.BasicStroke;
+import java.awt.Font;
 import java.util.ArrayList;
 
 /**
  * Cette classe represente la zone a dessin pour afficher les objets geometriques
  * 
  */
-// TODO (optionnel): modifier la classe de base, pour une classe plus adapte
 public class GeoAnalytiqueView extends javax.swing.JPanel {
     private static final long serialVersionUID = -5516505527325580028L;
-	private ArrayList<Graphique> graphiques;
+    private ArrayList<Graphique> graphiques;
+    private ArrayList<Graphique> selectedGraphiques;
+    
+    // Configuration du repère
+    private final int GRID_SPACING = 50; // Espacement entre les lignes de la grille en pixels
+    private final int AXIS_SPACING = 5;  // Espacement des graduations
+    private final Color GRID_COLOR = new Color(230, 230, 230);
+    private final Color AXIS_COLOR = new Color(150, 150, 150);
+    private final Font LABEL_FONT = new Font("Arial", Font.PLAIN, 10);
+    private final Color SELECTION_COLOR = Color.RED;
     
     /** Creates new form GeoAnalytiqueView */
     public GeoAnalytiqueView() {
         initComponents();
         graphiques = new ArrayList<Graphique>();
+        selectedGraphiques = new ArrayList<Graphique>();
+        setBackground(Color.WHITE);
     }
     
+    /**
+     * Ajoute un graphique à la zone de dessin
+     * @param g Graphique à ajouter
+     */
     public void addGraphique(Graphique g) {
     	graphiques.add(g);
+    }
+    
+    /**
+     * Sélectionne un graphique pour le mettre en évidence
+     * @param g Graphique à sélectionner
+     */
+    public void selectGraphique(Graphique g) {
+        if (!selectedGraphiques.contains(g)) {
+            selectedGraphiques.add(g);
+        }
+        repaint();
+    }
+    
+    /**
+     * Désélectionne un graphique
+     * @param g Graphique à désélectionner
+     */
+    public void deselectGraphique(Graphique g) {
+        selectedGraphiques.remove(g);
+        repaint();
+    }
+    
+    /**
+     * Désélectionne tous les graphiques
+     */
+    public void clearSelection() {
+        selectedGraphiques.clear();
+        repaint();
+    }
+    
+    /**
+     * Vérifie si un graphique est actuellement sélectionné
+     * @param g Graphique à vérifier
+     * @return true si le graphique est sélectionné, false sinon
+     */
+    public boolean isSelected(Graphique g) {
+        return selectedGraphiques.contains(g);
     }
     
     /** This method is called from within the constructor to
@@ -55,17 +111,114 @@ public class GeoAnalytiqueView extends javax.swing.JPanel {
     // End of variables declaration//GEN-END:variables
     
     @Override
-    public void paint(Graphics g) {
+    public void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        // Dessiner la grille
+        drawGrid(g2d);
+        
+        // Dessiner les axes
+        drawAxes(g2d);
+        
+        // Dessiner les objets
         for (Graphique graphique : graphiques) {
-			graphique.paint(g);
-		}
+            graphique.paint(g);
+        }
+        
+        // Dessiner les objets sélectionnés avec une mise en évidence
+        g2d.setColor(SELECTION_COLOR);
+        g2d.setStroke(new BasicStroke(2.0f));
+        for (Graphique graphique : selectedGraphiques) {
+            graphique.paint(g);
+        }
+    }
+    
+    /**
+     * Dessine une grille de fond pour faciliter le repérage
+     * @param g2d Contexte graphique
+     */
+    private void drawGrid(Graphics2D g2d) {
+        int width = getWidth();
+        int height = getHeight();
+        
+        g2d.setColor(GRID_COLOR);
+        g2d.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 
+                                      10.0f, new float[]{2.0f, 2.0f}, 0.0f));
+        
+        // Lignes horizontales
+        for (int y = 0; y < height; y += GRID_SPACING) {
+            g2d.drawLine(0, y, width, y);
+        }
+        
+        // Lignes verticales
+        for (int x = 0; x < width; x += GRID_SPACING) {
+            g2d.drawLine(x, 0, x, height);
+        }
+    }
+    
+    /**
+     * Dessine les axes du repère orthogonal
+     * @param g2d Contexte graphique
+     */
+    private void drawAxes(Graphics2D g2d) {
+        int width = getWidth();
+        int height = getHeight();
+        int centerX = width / 2;
+        int centerY = height / 2;
+        
+        g2d.setColor(AXIS_COLOR);
+        g2d.setStroke(new BasicStroke(2.0f));
+        
+        // Axe X
+        g2d.drawLine(0, centerY, width, centerY);
+        
+        // Axe Y
+        g2d.drawLine(centerX, 0, centerX, height);
+        
+        // Graduations et étiquettes
+        g2d.setFont(LABEL_FONT);
+        
+        // Graduations sur l'axe X
+        for (int x = centerX % GRID_SPACING; x < width; x += GRID_SPACING) {
+            g2d.drawLine(x, centerY - 5, x, centerY + 5);
+            int value = (x - centerX) / GRID_SPACING * AXIS_SPACING;
+            if (value != 0) { // Ne pas afficher 0 à l'origine
+                g2d.drawString(Integer.toString(value), x - 5, centerY + 20);
+            }
+        }
+        
+        // Graduations sur l'axe Y
+        for (int y = centerY % GRID_SPACING; y < height; y += GRID_SPACING) {
+            g2d.drawLine(centerX - 5, y, centerX + 5, y);
+            int value = -((y - centerY) / GRID_SPACING * AXIS_SPACING); // Valeur négative car Y est inversé à l'écran
+            if (value != 0) { // Ne pas afficher 0 à l'origine
+                g2d.drawString(Integer.toString(value), centerX + 10, y + 5);
+            }
+        }
+        
+        // Origine
+        g2d.drawString("O", centerX + 10, centerY + 20);
     }
 
-	public void clear() {
-		graphiques.clear();
-	}
+    /**
+     * Efface tous les graphiques de la zone de dessin
+     */
+    public void clear() {
+        graphiques.clear();
+        selectedGraphiques.clear();
+        repaint();
+    }
 
-	public void removeGraphique(Graphique c) {
-		graphiques.remove(c);		
-	}
+    /**
+     * Supprime un graphique de la zone de dessin
+     * @param c Graphique à supprimer
+     */
+    public void removeGraphique(Graphique c) {
+        graphiques.remove(c);
+        selectedGraphiques.remove(c);
+        repaint();
+    }
 }

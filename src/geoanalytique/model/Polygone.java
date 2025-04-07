@@ -3,6 +3,7 @@ package geoanalytique.model;
 import geoanalytique.util.GeoObjectVisitor;
 import geoanalytique.controleur.GeoAnalytiqueControleur;
 import geoanalytique.exception.VisiteurException;
+import geoanalytique.model.geoobject.operation.CalculAirePolygoneOperation;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +24,7 @@ public class Polygone extends Surface {
     public Polygone(Collection<Point> controles, GeoAnalytiqueControleur controleur) {
         super(controleur);
         this.points = new ArrayList<>(controles);
+        initOperations();
     }
     
     /**
@@ -34,6 +36,15 @@ public class Polygone extends Surface {
     public Polygone(String name, Collection<Point> controles, GeoAnalytiqueControleur controleur) {
         super(name, controleur);
         this.points = new ArrayList<>(controles);
+        initOperations();
+    }
+    
+    /**
+     * Initialise les opérations disponibles pour un polygone
+     */
+    private void initOperations() {
+        // Ajouter l'opération pour calculer l'aire
+        getOperations().add(new CalculAirePolygoneOperation(this));
     }
     
     /**

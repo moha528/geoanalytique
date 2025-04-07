@@ -3,6 +3,7 @@ package geoanalytique.model;
 import geoanalytique.util.GeoObjectVisitor;
 import geoanalytique.controleur.GeoAnalytiqueControleur;
 import geoanalytique.exception.VisiteurException;
+import geoanalytique.model.geoobject.operation.CalculMediatriceOperation;
  
 
 /**
@@ -28,6 +29,18 @@ public class Segment extends Droite {
         super(a, b, controleur);
         this.point1 = a;
         this.point2 = b;
+        initOperations(controleur);
+    }
+    
+    /**
+     * Initialise les opérations disponibles pour un segment
+     * @param controleur Contrôleur principal de l'application
+     */
+    private void initOperations(GeoAnalytiqueControleur controleur) {
+        // Ajouter l'opération pour calculer la médiatrice
+        if (controleur != null) {
+            getOperations().add(new CalculMediatriceOperation(this, controleur));
+        }
     }
     
     /**

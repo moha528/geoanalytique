@@ -3,6 +3,7 @@ package geoanalytique.model;
 import geoanalytique.exception.VisiteurException;
 import geoanalytique.util.GeoObjectVisitor;
 import geoanalytique.controleur.GeoAnalytiqueControleur;
+import geoanalytique.model.geoobject.operation.CalculPerimetreCercleOperation;
 
 /**
  * Modele mathematique pour les cercles.
@@ -21,6 +22,7 @@ public class Cercle extends Ellipse {
     public Cercle(Point centre, double rayon, GeoAnalytiqueControleur controleur) {
         super(centre, rayon * 2, rayon * 2, 0, controleur);
         this.rayon = rayon;
+        initOperations();
     }
     
     /**
@@ -33,6 +35,15 @@ public class Cercle extends Ellipse {
     public Cercle(String name, Point centre, double rayon, GeoAnalytiqueControleur controleur) {
         super(name, centre, rayon * 2, rayon * 2, 0, controleur);
         this.rayon = rayon;
+        initOperations();
+    }
+    
+    /**
+     * Initialise les opérations disponibles pour un cercle
+     */
+    private void initOperations() {
+        // Ajouter l'opération pour calculer le périmètre
+        getOperations().add(new CalculPerimetreCercleOperation(this));
     }
     
     /**

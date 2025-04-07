@@ -3,6 +3,7 @@ package geoanalytique.model;
 import geoanalytique.util.GeoObjectVisitor;
 import geoanalytique.controleur.GeoAnalytiqueControleur;
 import geoanalytique.exception.VisiteurException;
+import geoanalytique.model.geoobject.operation.CalculCercleCirconscritOperation;
 import geoanalytique.model.geoobject.operation.CalculDistanceOperation;
 import geoanalytique.model.geoobject.operation.CalculMilieuOperation;
 import geoanalytique.model.geoobject.operation.DeplacerPointOperation;
@@ -58,6 +59,7 @@ public class Point extends GeoObject {
         getOperations().add(new DeplacerPointOperation(this));
         getOperations().add(new CalculDistanceOperation(this));
         getOperations().add(new CalculMilieuOperation(this, controleur));
+        getOperations().add(new CalculCercleCirconscritOperation(this, controleur));
     }
 
     /**

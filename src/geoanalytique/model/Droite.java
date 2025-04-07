@@ -34,6 +34,19 @@ public class Droite extends GeoObject {
     }
     
     /**
+     * Constructeur d'une droite à partir d'un point et d'une pente avec un nom spécifique
+     * @param name Nom de la droite
+     * @param p Point appartenant à la droite
+     * @param pente Pente de la droite
+     * @param controleur Contrôleur principal de l'application
+     */
+    public Droite(String name, Point p, double pente, GeoAnalytiqueControleur controleur) {
+        super(name, controleur);
+        this.point = p;
+        this.pente = pente;
+    }
+    
+    /**
      * Constructeur d'une droite à partir de deux points
      * @param p1 Premier point de la droite
      * @param p2 Deuxième point de la droite
@@ -41,6 +54,19 @@ public class Droite extends GeoObject {
      */
     public Droite(Point p1, Point p2, GeoAnalytiqueControleur controleur) {
         super(controleur);
+        this.point = p1;
+        this.pente = p1.calculPente(p2);
+    }
+    
+    /**
+     * Constructeur d'une droite à partir de deux points avec un nom spécifique
+     * @param name Nom de la droite
+     * @param p1 Premier point de la droite
+     * @param p2 Deuxième point de la droite
+     * @param controleur Contrôleur principal de l'application
+     */
+    public Droite(String name, Point p1, Point p2, GeoAnalytiqueControleur controleur) {
+        super(name, controleur);
         this.point = p1;
         this.pente = p1.calculPente(p2);
     }
