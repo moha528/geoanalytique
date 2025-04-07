@@ -41,7 +41,7 @@ public class CalculMediatriceOperation implements Operation {
         double yMilieu = (p1.getY() + p2.getY()) / 2;
         Point milieu = new Point(xMilieu, yMilieu, controleur);
         
-        // Calcule la pente de la médiatrice (perpendiculaire)
+        // Calcule la pente du segment
         double penteSeg = p1.calculPente(p2);
         double penteMed;
         
@@ -50,9 +50,7 @@ public class CalculMediatriceOperation implements Operation {
             penteMed = 0;
         } else if (Math.abs(penteSeg) < Point.DELTA_PRECISION) {
             // Si le segment est horizontal, sa médiatrice est verticale
-            // On utilise un point avec une abscisse légèrement décalée pour créer la droite verticale
-            Point autrePt = new Point(milieu.getX(), milieu.getY() + 1, controleur);
-            return new Droite("Med_" + segment.getName(), milieu, autrePt, controleur);
+            penteMed = Double.POSITIVE_INFINITY;
         } else {
             // Calcul de la pente perpendiculaire
             penteMed = -1.0 / penteSeg;
